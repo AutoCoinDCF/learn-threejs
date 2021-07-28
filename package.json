@@ -11,6 +11,7 @@
     "core-js": "^3.6.5",
     "k-form-design": "^3.7.91",
     "three": "^0.130.1",
+    "three-orbitcontrols": "^2.110.3",
     "vue": "^2.6.11"
   },
   "devDependencies": {
