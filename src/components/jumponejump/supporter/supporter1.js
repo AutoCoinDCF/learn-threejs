@@ -41,7 +41,7 @@ export default class Supporter1{
             this.tween.onComplete(this.stopAnimation.bind(this));
             this.tween.easing(TWEEN.Easing.Quadratic.In);
             this.tween.start();
-
+            // return this.tween
             // this.animation()
         } else {
             let size = this.size
@@ -56,6 +56,10 @@ export default class Supporter1{
             scene.add(this.mesh)
         }
         
+    }
+
+    getTween(){
+        return this.tween
     }
 
     animation(obj){
@@ -83,5 +87,17 @@ export default class Supporter1{
 
     getTopPosition(){
         return this.topPosition
+    }
+
+    isPointIn(position){
+        let isIn = false
+        let px = position[0];
+        let topPosition = this.getTopPosition()
+        let minx = topPosition[0] - this.size.width / 2;
+        let maxx = topPosition[0] + this.size.width / 2;
+        if(px >= minx && px <= maxx){
+            isIn = true
+        }
+        return isIn
     }
 }

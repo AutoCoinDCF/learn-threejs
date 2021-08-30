@@ -1,13 +1,18 @@
 import * as THREE from 'three';
+import TWEEN from '@tweenjs/tween.js'
 
 export default class SCR {
-    constructor(width, height, container){
+    constructor(width, height, container, animationGroup){
         this.width = width;
         this.height = height;
-        this.container = container
+        this.container = container;
+        this.animationGroup = animationGroup
         this.scene = null
         this.camera = null
         this.renderer = null;
+        this.tween = null;
+        this.currentCameraFocus = [0, 0, 0]
+        this.targetCamerFoucs = [0, 0, 0]
         this.init()
     }
 
@@ -15,6 +20,12 @@ export default class SCR {
         this.initScene();
 		this.addCamera(this.scene)
 		this.addRenderer(this.scene, this.camera)
+
+        this.tween = new TWEEN.Tween({x: 0}, this.animationGroup).to({x: 10}, 1000)
+        this.tween.onUpdate(this.animation.bind(this));
+        this.tween.onComplete(this.stopAnimation.bind(this));
+        // this.tween.easing(TWEEN.Easing.Quadratic.In);
+        // this.tween.start();
     }
 
     initScene(){
@@ -25,14 +36,25 @@ export default class SCR {
 
     addCamera(scene){
         this.camera = new THREE.PerspectiveCamera(60, this.width/this.height, 1, 10000);
-        this.setCameraPositionAndFocus(this.camera)
+        this.setCameraPositionAndFocus([0, 0, 0])
         scene.add(this.camera);
     }
 
-    setCameraPositionAndFocus(camera){
-        let {position, focus} = this.getCameraParams([0, 0, 0])
-        camera.position.set( ...position );
-        camera.lookAt( ...focus );
+    setCameraToSupporter(supporter){
+        let position = supporter.getTopPosition();
+        this.setCameraPositionAndFocus(position, true)
+    }
+
+    setCameraPositionAndFocus(cPosition, isAnimation = false){
+        if (isAnimation) {
+            this.targetCamerFoucs = cPosition
+            this.tween.start()
+        } else {
+            let {position, focus} = this.getCameraParams(cPosition)
+            this.camera.position.set( ...position );
+            this.camera.lookAt( ...focus );
+            this.currentCameraFocus = cPosition
+        }
     }
 
     getCameraParams(meshPosition){
@@ -66,5 +88,17 @@ export default class SCR {
 
     getRenderer(){
         return this.renderer
+    }
+
+    animation(obj){
+        let cPosition = [this.currentCameraFocus[0] + obj.x, this.currentCameraFocus[1], this.currentCameraFocus[2]]
+        let {position, focus} = this.getCameraParams(cPosition)
+        this.camera.position.set( ...position );
+        this.camera.lookAt( ...focus );
+        this.render()
+    }
+
+    stopAnimation(){
+        this.currentCameraFocus = this.targetCamerFoucs
     }
 }

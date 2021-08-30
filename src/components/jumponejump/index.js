@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import * as OrbitControls from "three-orbitcontrols";
+// import * as OrbitControls from "three-orbitcontrols";
 import TWEEN from '@tweenjs/tween.js'
 // import 
 
@@ -9,40 +9,26 @@ import Supporter from './supporter'
 
 export default class JumpOneJump{
     constructor(){
-        this.scr = new SCR(window.innerWidth, window.innerHeight, document.body)
         this.light = null
         this.lightHelper = null
         this.raycaster = null
         this.shadowCameraHelper = null
-        // this.dynamicMesh = null
-        // this.meshSize = {width: 6,length: 6,height: 2}
-        // this.dynamicMeshSize = {width: 2, length: 2, height: 4}
-        // this.currentPosition = [0, 0, 0]
-        // this.nextMeshDis = 10
-        // this.upDis = 5
-        
-        // this.animationObj = {r: 0, x: 0, y: 0};
-        // this.animationValues = {r: Math.PI * 2, x: this.nextMeshDis, y: Math.PI};
-        // this.nextPosition = this.getNewPosition(this.currentPosition);
-        // this.animationId = null;
-        // this.tweenA = null;
-        // this.tweenB = null;
-        // this.skipping = false;
-        // this.startSkip = true
-
-        // this.afterSkipAnimationObj = {
-        //     supporterDown: 10,
-        // }
         this.supporter = null
         this.skiper = null
-        this.tweenSkip = new TWEEN.Group();
-        this.tweenAfterSkip = new TWEEN.Group();
+        this.tweenSkipGroup = new TWEEN.Group();
+        this.tweenAfterSkipGroup = new TWEEN.Group();
+        this.tweenCameraGroup = new TWEEN.Group();
+        this.tweenSkip = null;
+        this.skiperEvents = {
+            skipComplete: this.skipComplete.bind(this)
+        };
+        this.scr = new SCR(window.innerWidth, window.innerHeight, document.body, this.tweenCameraGroup)
     }
 
-    init(){
+    init(){ 
         let scene = this.scr.getScene()
-        let camera = this.scr.getCamera()
-        let renderer = this.scr.getRenderer()
+        // let camera = this.scr.getCamera()
+        // let renderer = this.scr.getRenderer()
 		this.addHelperLine()
 		this.addPlane(scene)
 		this.addLight(scene)
@@ -50,30 +36,21 @@ export default class JumpOneJump{
 		this.addEventListener()
 		
 		
-		const controls = new OrbitControls( camera, renderer.domElement );
-		controls.addEventListener( 'change', () => {
-            this.scr.render()
-        } );
-		controls.minDistance = 20;
-		controls.maxDistance = 500;
-		controls.enablePan = true;
+		// const controls = new OrbitControls( camera, renderer.domElement );
+		// controls.addEventListener( 'change', () => {
+        //     this.scr.render()
+        // } );
+		// controls.minDistance = 20;
+		// controls.maxDistance = 500;
+		// controls.enablePan = true;
         
-        
-        // this.tweenA = new TWEEN.Tween({r: 0, x: 0, y: 0}).to({r: Math.PI * 2, x: this.nextMeshDis, y: Math.PI}, 1000)
-        // this.tweenA.onUpdate(this.upAnimation.bind(this));
-        // this.tweenA.onComplete(this.stopSkipAnimation.bind(this));
-
-        // this.tweenB = new TWEEN.Tween({y: 10})
-
-        this.animation()
         this.supporter = new Supporter(this.scr)
         this.supporter.init()
         let skiperPosition = this.getSkiperPosition()
-        this.skiper = new Skiper(this.scr, skiperPosition, this.tweenSkip);
+        this.skiper = new Skiper(this.scr, skiperPosition, this.skiperEvents, this.tweenSkipGroup);
         this.skiper.init()
-
-        // this.tweenAfterSkip
-
+        this.animation()
+        this.scr.render()
     }
 
     
@@ -126,20 +103,20 @@ export default class JumpOneJump{
     }
 
     addLight(scene){
-        const spotLight = new THREE.SpotLight( 0xffffff, 1 );
-        spotLight.position.set( 20, 50, 50 );
-        spotLight.angle = Math.PI / 4;
-        spotLight.penumbra = 0.1;
-        spotLight.decay = 2;
-        spotLight.distance = 300;
+        // const spotLight = new THREE.SpotLight( 0xffffff, 1 );
+        // spotLight.position.set( 20, 50, 50 );
+        // spotLight.angle = Math.PI / 4;
+        // spotLight.penumbra = 0.1;
+        // spotLight.decay = 2;
+        // spotLight.distance = 300;
 
-        spotLight.castShadow = true;
-        spotLight.shadow.mapSize.width = 512;
-        spotLight.shadow.mapSize.height = 512;
-        spotLight.shadow.camera.near = 10;
-        spotLight.shadow.camera.far = 2000;
-        spotLight.shadow.focus = 1;
-        scene.add( spotLight );
+        // spotLight.castShadow = true;
+        // spotLight.shadow.mapSize.width = 512;
+        // spotLight.shadow.mapSize.height = 512;
+        // spotLight.shadow.camera.near = 10;
+        // spotLight.shadow.camera.far = 2000;
+        // spotLight.shadow.focus = 1;
+        // scene.add( spotLight );
         // this.lightHelper = new THREE.SpotLightHelper( spotLight );
         // scene.add( this.lightHelper );
         // this.shadowCameraHelper = new THREE.CameraHelper( spotLight.shadow.camera );
@@ -149,7 +126,6 @@ export default class JumpOneJump{
         var dirLight = new THREE.DirectionalLight( 0xffffff, 1, 10 );
         dirLight.position.set(0, 5000, 5000 ); 			//default; light shining from top
         dirLight.castShadow = true;            // default false
-        scene.add( dirLight );
 
         //Set up shadow properties for the light
         dirLight.shadow.mapSize.width = 512;  // default
@@ -162,6 +138,11 @@ export default class JumpOneJump{
         dirLight.shadow.camera.far = 10000;
         dirLight.shadow.bias = 0.0000001
 
+        
+        scene.add( dirLight );
+
+        this.scr.render()
+
         // var helper = new THREE.CameraHelper( dirLight.shadow.camera );
         // scene.add( helper );
     }
@@ -172,65 +153,48 @@ export default class JumpOneJump{
         return topPosition
     }
 
-    
-
-    getNewPosition(position){
-        return [position[0] + this.nextMeshDis, position[1], position[2]];
-        
-
-    }
-
     addEventListener(){
         // this.raycaster = new THREE.Raycaster();
         document.addEventListener( 'pointerup', this.onPointerup.bind(this) );
-        // document.addEventListener( 'pointerdown', this.onPointerDown.bind(this) );
+        document.addEventListener( 'pointerdown', this.onPointerDown.bind(this) );
     }
 
     onPointerDown(){
-        if(this.skipping) return;
         this.downTime = new Date().getTime();
         console.log('mouseDown');
         // this.startSkip = true
     }
 
     onPointerup(){
-        // if(this.skipping) return;
-        // this.skipping = true;
-        // this.tweenA.start()
-        this.tweenAfterSkip.removeAll()
-        this.supporter.addNextSupporter(this.tweenAfterSkip)
-        this.skiper.skip()
+        if(!this.downTime) return;
+        let nowTime = new Date().getTime();
+        let time = nowTime - this.downTime;
+        let distance = time / 100
+        // this.tweenSkip.chain(tweenSupporter)
+        this.skiper.skip(distance > 20 ? 20 : distance, this.supporter.supporterList)
         this.scr.render()
-        
+        this.downTime = null
+    }
 
+    skipComplete(status){
+        if(status === 1){
+            this.tweenAfterSkipGroup.removeAll()
+            let cSupporter = this.supporter.addNextSupporter(this.tweenAfterSkipGroup)
+            this.scr.setCameraToSupporter(cSupporter)
+        }
+        // 
+    
+        // 
+        // this.tweenCameraGroup
+        // let tweenSupporter = cSupporter.getTween()
     }
 
     animation(){
-        // this.dynamicMesh.rotateZ(-0.01);
-        // this.renderer.render(this.scene, this.camera);
-        this.tweenAfterSkip.update();
-        this.tweenSkip.update()
+        this.tweenSkipGroup.update()
+        this.tweenAfterSkipGroup.update();
+        this.tweenCameraGroup.update();
+        this.scr.render()
         requestAnimationFrame(this.animation.bind(this))
-        
-        
-    }
-
-    upAnimation(obj){
-        let position = this.getDynamicMeshPosition(this.currentPosition)
-        let height = Math.sin(obj.y) * this.upDis
-        let newPosition = [position[0] + obj.x, position[1] + height, position[2]]
-        this.dynamicMesh.position.set( ...newPosition );
-        this.dynamicMesh.rotation.z = obj.r
-        this.scr.render();
-    }
-
-    stopSkipAnimation(){
-        this.tweenA.stop()
-        this.skipping = false;
-        // this.currentPosition = this.nextPosition;
-        // this.nextPosition = this.getNewPosition(this.currentPosition);
-        // this.addMesh(this.scene, this.nextPosition);
-        // this.render();
     }
 
 }

@@ -10,18 +10,22 @@ export default class Supporter{
     init(scr = null){
         if(scr) this.setScr(scr)
         this.addNextSupporter();
-        this.addNextSupporter();
+        let cSupporter = this.addNextSupporter();
+        this.scr.setCameraToSupporter(cSupporter)
+        // this.scr.render()
     }
 
     addNextSupporter(animationGroup = null){
         let supporterCount = this.supporterList.length
         let newPosition = this.initPosition;
+        let moveDis = Math.random() * 10 + 10
         if(supporterCount > 0){
             let currentPosition = this.supporterList[supporterCount - 1].getBottomPosition()
-            newPosition = [currentPosition[0] + 10, currentPosition[1], currentPosition[2]]
+            newPosition = [currentPosition[0] + moveDis, currentPosition[1], currentPosition[2]]
         }
         let supporter = new Supporter1(this.scr, newPosition, animationGroup);
         this.supporterList.push(supporter)
+        return supporter
     }
 
     setScr(scr){
